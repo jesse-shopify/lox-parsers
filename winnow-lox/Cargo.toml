@@ -1,0 +1,12 @@
+[package]
+name = "winnow-lox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winnow = { workspace = true }
+lox-ast = { workspace = true }
+
+[[bin]]
+name = "winnow-lox"
+path = "src/main.rs"

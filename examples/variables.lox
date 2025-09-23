@@ -1,0 +1,12 @@
+// Variable declarations and assignments
+var name = "Lox";
+var version = 1.0;
+var isAwesome = true;
+
+print name;
+print version;
+print isAwesome;
+
+// Assignment
+name = "Super Lox";
+print name;

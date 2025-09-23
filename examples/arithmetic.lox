@@ -1,0 +1,9 @@
+// Arithmetic expressions
+var a = 10;
+var b = 20;
+var sum = a + b;
+print sum;
+
+// More complex expressions
+var result = (a + b) * 2 - 5;
+print result;

@@ -1,0 +1,15 @@
+[package]
+name = "lalrpop-lox"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+lalrpop = { workspace = true }
+
+[dependencies]
+lalrpop-util = { workspace = true }
+lox-ast = { workspace = true }
+
+[[bin]]
+name = "lalrpop-lox"
+path = "src/main.rs"

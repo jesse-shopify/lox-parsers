@@ -1,0 +1,323 @@
+//! Winnow-based parser for the Lox language
+
+use winnow::{
+    ascii::{alpha1, alphanumeric1, digit1, multispace0},
+    combinator::{alt, delimited, opt, preceded, repeat, separated, terminated},
+    token::{any, one_of, take_until, take_while},
+    PResult, Parser,
+};
+use lox_ast::{BinaryOp, Expr, Program, Stmt, UnaryOp, Value};
+
+/// Parse whitespace and comments
+fn ws<'s>(input: &mut &'s str) -> PResult<()> {
+    multispace0.void().parse_next(input)
+}
+
+/// Parse a line comment
+fn line_comment<'s>(input: &mut &'s str) -> PResult<()> {
+    ("//" >> take_until(0.., '\n')).void().parse_next(input)
+}
+
+/// Parse an identifier
+fn identifier<'s>(input: &mut &'s str) -> PResult<String> {
+    (
+        alt((alpha1, "_")),
+        repeat(0.., alt((alphanumeric1, "_"))),
+    )
+        .recognize()
+        .map(|s: &str| s.to_string())
+        .parse_next(input)
+}
+
+/// Parse a string literal
+fn string_literal<'s>(input: &mut &'s str) -> PResult<String> {
+    delimited(
+        '"',
+        take_while(0.., |c| c != '"').map(|s: &str| s.to_string()),
+        '"',
+    )
+    .parse_next(input)
+}
+
+/// Parse a number literal
+fn number_literal<'s>(input: &mut &'s str) -> PResult<f64> {
+    (digit1, opt(('.', digit1)))
+        .recognize()
+        .try_map(|s: &str| s.parse::<f64>())
+        .parse_next(input)
+}
+
+/// Parse a boolean literal
+fn boolean_literal<'s>(input: &mut &'s str) -> PResult<bool> {
+    alt(("true".value(true), "false".value(false))).parse_next(input)
+}
+
+/// Parse nil literal
+fn nil_literal<'s>(input: &mut &'s str) -> PResult<()> {
+    "nil".value(()).parse_next(input)
+}
+
+/// Parse a literal value
+fn literal<'s>(input: &mut &'s str) -> PResult<Value> {
+    alt((
+        nil_literal.map(|_| Value::Nil),
+        boolean_literal.map(Value::Bool),
+        number_literal.map(Value::Number),
+        string_literal.map(Value::String),
+    ))
+    .parse_next(input)
+}
+
+/// Parse a primary expression
+fn primary<'s>(input: &mut &'s str) -> PResult<Expr> {
+    alt((
+        literal.map(Expr::Literal),
+        identifier.map(Expr::Variable),
+        delimited(
+            (ws, '(', ws),
+            expression,
+            (ws, ')', ws),
+        )
+        .map(|e| Expr::Grouping(Box::new(e))),
+    ))
+    .parse_next(input)
+}
+
+/// Parse unary expressions
+fn unary<'s>(input: &mut &'s str) -> PResult<Expr> {
+    alt((
+        (
+            alt((
+                '!'.value(UnaryOp::Not),
+                '-'.value(UnaryOp::Minus),
+            )),
+            ws,
+            unary,
+        )
+            .map(|(op, _, expr)| Expr::Unary {
+                operator: op,
+                operand: Box::new(expr),
+            }),
+        primary,
+    ))
+    .parse_next(input)
+}
+
+/// Parse multiplication and division
+fn factor<'s>(input: &mut &'s str) -> PResult<Expr> {
+    let (init, ops) = (
+        unary,
+        repeat(
+            0..,
+            (
+                ws,
+                alt((
+                    '*'.value(BinaryOp::Multiply),
+                    '/'.value(BinaryOp::Divide),
+                )),
+                ws,
+                unary,
+            ),
+        ),
+    )
+        .parse_next(input)?;
+
+    Ok(ops.into_iter().fold(init, |acc, (_, op, _, expr)| {
+        Expr::Binary {
+            left: Box::new(acc),
+            operator: op,
+            right: Box::new(expr),
+        }
+    }))
+}
+
+/// Parse addition and subtraction
+fn term<'s>(input: &mut &'s str) -> PResult<Expr> {
+    let (init, ops) = (
+        factor,
+        repeat(
+            0..,
+            (
+                ws,
+                alt((
+                    '+'.value(BinaryOp::Add),
+                    '-'.value(BinaryOp::Subtract),
+                )),
+                ws,
+                factor,
+            ),
+        ),
+    )
+        .parse_next(input)?;
+
+    Ok(ops.into_iter().fold(init, |acc, (_, op, _, expr)| {
+        Expr::Binary {
+            left: Box::new(acc),
+            operator: op,
+            right: Box::new(expr),
+        }
+    }))
+}
+
+/// Parse comparison operators
+fn comparison<'s>(input: &mut &'s str) -> PResult<Expr> {
+    let (init, ops) = (
+        term,
+        repeat(
+            0..,
+            (
+                ws,
+                alt((
+                    ">=".value(BinaryOp::GreaterEqual),
+                    '>'.value(BinaryOp::Greater),
+                    "<=".value(BinaryOp::LessEqual),
+                    '<'.value(BinaryOp::Less),
+                )),
+                ws,
+                term,
+            ),
+        ),
+    )
+        .parse_next(input)?;
+
+    Ok(ops.into_iter().fold(init, |acc, (_, op, _, expr)| {
+        Expr::Binary {
+            left: Box::new(acc),
+            operator: op,
+            right: Box::new(expr),
+        }
+    }))
+}
+
+/// Parse equality operators
+fn equality<'s>(input: &mut &'s str) -> PResult<Expr> {
+    let (init, ops) = (
+        comparison,
+        repeat(
+            0..,
+            (
+                ws,
+                alt((
+                    "!=".value(BinaryOp::NotEqual),
+                    "==".value(BinaryOp::Equal),
+                )),
+                ws,
+                comparison,
+            ),
+        ),
+    )
+        .parse_next(input)?;
+
+    Ok(ops.into_iter().fold(init, |acc, (_, op, _, expr)| {
+        Expr::Binary {
+            left: Box::new(acc),
+            operator: op,
+            right: Box::new(expr),
+        }
+    }))
+}
+
+/// Parse logical AND
+fn logical_and<'s>(input: &mut &'s str) -> PResult<Expr> {
+    let (init, ops) = (
+        equality,
+        repeat(0.., (ws, "and", ws, equality)),
+    )
+        .parse_next(input)?;
+
+    Ok(ops.into_iter().fold(init, |acc, (_, _, _, expr)| {
+        Expr::Binary {
+            left: Box::new(acc),
+            operator: BinaryOp::And,
+            right: Box::new(expr),
+        }
+    }))
+}
+
+/// Parse logical OR
+fn logical_or<'s>(input: &mut &'s str) -> PResult<Expr> {
+    let (init, ops) = (
+        logical_and,
+        repeat(0.., (ws, "or", ws, logical_and)),
+    )
+        .parse_next(input)?;
+
+    Ok(ops.into_iter().fold(init, |acc, (_, _, _, expr)| {
+        Expr::Binary {
+            left: Box::new(acc),
+            operator: BinaryOp::Or,
+            right: Box::new(expr),
+        }
+    }))
+}
+
+/// Parse assignment
+fn assignment<'s>(input: &mut &'s str) -> PResult<Expr> {
+    alt((
+        (identifier, ws, '=', ws, assignment).map(|(name, _, _, _, value)| {
+            Expr::Assignment {
+                name,
+                value: Box::new(value),
+            }
+        }),
+        logical_or,
+    ))
+    .parse_next(input)
+}
+
+/// Parse a full expression
+fn expression<'s>(input: &mut &'s str) -> PResult<Expr> {
+    assignment.parse_next(input)
+}
+
+/// Parse a print statement
+fn print_stmt<'s>(input: &mut &'s str) -> PResult<Stmt> {
+    ("print", ws, expression, ws, ';')
+        .map(|(_, _, expr, _, _)| Stmt::Print(expr))
+        .parse_next(input)
+}
+
+/// Parse a variable declaration
+fn var_declaration<'s>(input: &mut &'s str) -> PResult<Stmt> {
+    (
+        "var",
+        ws,
+        identifier,
+        opt((ws, '=', ws, expression)),
+        ws,
+        ';',
+    )
+        .map(|(_, _, name, initializer, _, _)| Stmt::VarDeclaration {
+            name,
+            initializer: initializer.map(|(_, _, _, expr)| expr),
+        })
+        .parse_next(input)
+}
+
+/// Parse an expression statement
+fn expr_stmt<'s>(input: &mut &'s str) -> PResult<Stmt> {
+    terminated(expression, (ws, ';'))
+        .map(Stmt::Expression)
+        .parse_next(input)
+}
+
+/// Parse a statement
+fn statement<'s>(input: &mut &'s str) -> PResult<Stmt> {
+    preceded(
+        ws,
+        alt((print_stmt, var_declaration, expr_stmt)),
+    )
+    .parse_next(input)
+}
+
+/// Parse a program (list of statements)
+fn program<'s>(input: &mut &'s str) -> PResult<Program> {
+    terminated(repeat(0.., statement), ws)
+        .map(Program::new)
+        .parse_next(input)
+}
+
+/// Parse a complete Lox program from a string
+pub fn parse_program(input: &str) -> Result<Program, winnow::error::ParseError<&str, winnow::error::ContextError>> {
+    program.parse(input)
+}

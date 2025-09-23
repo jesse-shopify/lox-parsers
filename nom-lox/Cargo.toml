@@ -1,0 +1,12 @@
+[package]
+name = "nom-lox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nom = { workspace = true }
+lox-ast = { workspace = true }
+
+[[bin]]
+name = "nom-lox"
+path = "src/main.rs"

@@ -1,0 +1,9 @@
+[package]
+name = "lox-ast"
+version = "0.1.0"
+edition = "2021"
+description = "Abstract Syntax Tree definitions for the Lox programming language"
+authors = ["Jesse Johnson"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]

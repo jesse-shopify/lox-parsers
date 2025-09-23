@@ -1,0 +1,12 @@
+[package]
+name = "chumsky-lox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chumsky = "0.9"
+lox-ast = { workspace = true }
+
+[[bin]]
+name = "chumsky-lox"
+path = "src/main.rs"

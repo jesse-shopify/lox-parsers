@@ -1,0 +1,13 @@
+[package]
+name = "pest-lox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pest = { workspace = true }
+pest_derive = { workspace = true }
+lox-ast = { workspace = true }
+
+[[bin]]
+name = "pest-lox"
+path = "src/main.rs"

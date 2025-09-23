@@ -1,0 +1,50 @@
+// Pest grammar for the Lox programming language
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
+
+// Literals
+nil = { "nil" }
+boolean = { "true" | "false" }
+number = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+
+// Identifiers
+identifier = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Operators
+binary_op = {
+    "==" | "!=" | ">=" | "<=" | ">" | "<" |
+    "+" | "-" | "*" | "/" |
+    "and" | "or"
+}
+
+unary_op = { "!" | "-" }
+
+// Expressions
+primary = {
+    nil | boolean | number | string | identifier |
+    "(" ~ expression ~ ")"
+}
+
+unary = { unary_op* ~ primary }
+
+factor = { unary ~ (("*" | "/") ~ unary)* }
+term = { factor ~ (("+" | "-") ~ factor)* }
+comparison = { term ~ ((">" | ">=" | "<" | "<=") ~ term)* }
+equality = { comparison ~ (("==" | "!=") ~ comparison)* }
+logical_and = { equality ~ ("and" ~ equality)* }
+logical_or = { logical_and ~ ("or" ~ logical_and)* }
+assignment = { identifier ~ "=" ~ assignment | logical_or }
+
+expression = { assignment }
+
+// Statements
+expression_stmt = { expression ~ ";" }
+print_stmt = { "print" ~ expression ~ ";" }
+var_decl = { "var" ~ identifier ~ ("=" ~ expression)? ~ ";" }
+
+statement = { print_stmt | var_decl | expression_stmt }
+
+// Program
+program = { SOI ~ statement* ~ EOI }
