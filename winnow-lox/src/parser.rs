@@ -2,35 +2,32 @@
 
 use winnow::{
     ascii::{alpha1, alphanumeric1, digit1, multispace0},
-    combinator::{alt, delimited, opt, preceded, repeat, separated, terminated},
-    token::{any, one_of, take_until, take_while},
-    PResult, Parser,
+    combinator::{alt, delimited, opt, preceded, repeat, terminated},
+    token::{take_while},
+    ModalResult, Parser, stream::AsChar,
 };
 use lox_ast::{BinaryOp, Expr, Program, Stmt, UnaryOp, Value};
 
 /// Parse whitespace and comments
-fn ws<'s>(input: &mut &'s str) -> PResult<()> {
-    multispace0.void().parse_next(input)
-}
-
-/// Parse a line comment
-fn line_comment<'s>(input: &mut &'s str) -> PResult<()> {
-    ("//" >> take_until(0.., '\n')).void().parse_next(input)
+fn ws<'s>(input: &mut &'s str) -> ModalResult<()> {
+    repeat::<_, _, (), _, _>(0.., alt((
+        multispace0.void(),
+        ("//", take_while(0.., |c| c != '\n')).void(),
+    )))
+    .void()
+    .parse_next(input)
 }
 
 /// Parse an identifier
-fn identifier<'s>(input: &mut &'s str) -> PResult<String> {
-    (
-        alt((alpha1, "_")),
-        repeat(0.., alt((alphanumeric1, "_"))),
-    )
-        .recognize()
+fn identifier<'s>(input: &mut &'s str) -> ModalResult<String> {
+    take_while(1.., |c: char| c.is_alphanum() || c == '_')
+        .verify(|s: &str| s.chars().next().unwrap().is_alpha() || s.starts_with('_'))
         .map(|s: &str| s.to_string())
         .parse_next(input)
 }
 
 /// Parse a string literal
-fn string_literal<'s>(input: &mut &'s str) -> PResult<String> {
+fn string_literal<'s>(input: &mut &'s str) -> ModalResult<String> {
     delimited(
         '"',
         take_while(0.., |c| c != '"').map(|s: &str| s.to_string()),
@@ -40,25 +37,25 @@ fn string_literal<'s>(input: &mut &'s str) -> PResult<String> {
 }
 
 /// Parse a number literal
-fn number_literal<'s>(input: &mut &'s str) -> PResult<f64> {
+fn number_literal<'s>(input: &mut &'s str) -> ModalResult<f64> {
     (digit1, opt(('.', digit1)))
-        .recognize()
+        .take()
         .try_map(|s: &str| s.parse::<f64>())
         .parse_next(input)
 }
 
 /// Parse a boolean literal
-fn boolean_literal<'s>(input: &mut &'s str) -> PResult<bool> {
+fn boolean_literal<'s>(input: &mut &'s str) -> ModalResult<bool> {
     alt(("true".value(true), "false".value(false))).parse_next(input)
 }
 
 /// Parse nil literal
-fn nil_literal<'s>(input: &mut &'s str) -> PResult<()> {
+fn nil_literal<'s>(input: &mut &'s str) -> ModalResult<()> {
     "nil".value(()).parse_next(input)
 }
 
 /// Parse a literal value
-fn literal<'s>(input: &mut &'s str) -> PResult<Value> {
+fn literal<'s>(input: &mut &'s str) -> ModalResult<Value> {
     alt((
         nil_literal.map(|_| Value::Nil),
         boolean_literal.map(Value::Bool),
@@ -69,7 +66,7 @@ fn literal<'s>(input: &mut &'s str) -> PResult<Value> {
 }
 
 /// Parse a primary expression
-fn primary<'s>(input: &mut &'s str) -> PResult<Expr> {
+fn primary<'s>(input: &mut &'s str) -> ModalResult<Expr> {
     alt((
         literal.map(Expr::Literal),
         identifier.map(Expr::Variable),
@@ -84,7 +81,7 @@ fn primary<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse unary expressions
-fn unary<'s>(input: &mut &'s str) -> PResult<Expr> {
+fn unary<'s>(input: &mut &'s str) -> ModalResult<Expr> {
     alt((
         (
             alt((
@@ -104,8 +101,8 @@ fn unary<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse multiplication and division
-fn factor<'s>(input: &mut &'s str) -> PResult<Expr> {
-    let (init, ops) = (
+fn factor<'s>(input: &mut &'s str) -> ModalResult<Expr> {
+    let (init, ops): (Expr, Vec<((), BinaryOp, (), Expr)>) = (
         unary,
         repeat(
             0..,
@@ -132,8 +129,8 @@ fn factor<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse addition and subtraction
-fn term<'s>(input: &mut &'s str) -> PResult<Expr> {
-    let (init, ops) = (
+fn term<'s>(input: &mut &'s str) -> ModalResult<Expr> {
+    let (init, ops): (Expr, Vec<((), BinaryOp, (), Expr)>) = (
         factor,
         repeat(
             0..,
@@ -160,8 +157,8 @@ fn term<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse comparison operators
-fn comparison<'s>(input: &mut &'s str) -> PResult<Expr> {
-    let (init, ops) = (
+fn comparison<'s>(input: &mut &'s str) -> ModalResult<Expr> {
+    let (init, ops): (Expr, Vec<((), BinaryOp, (), Expr)>) = (
         term,
         repeat(
             0..,
@@ -190,8 +187,8 @@ fn comparison<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse equality operators
-fn equality<'s>(input: &mut &'s str) -> PResult<Expr> {
-    let (init, ops) = (
+fn equality<'s>(input: &mut &'s str) -> ModalResult<Expr> {
+    let (init, ops): (Expr, Vec<((), BinaryOp, (), Expr)>) = (
         comparison,
         repeat(
             0..,
@@ -218,8 +215,8 @@ fn equality<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse logical AND
-fn logical_and<'s>(input: &mut &'s str) -> PResult<Expr> {
-    let (init, ops) = (
+fn logical_and<'s>(input: &mut &'s str) -> ModalResult<Expr> {
+    let (init, ops): (Expr, Vec<((), &str, (), Expr)>) = (
         equality,
         repeat(0.., (ws, "and", ws, equality)),
     )
@@ -235,8 +232,8 @@ fn logical_and<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse logical OR
-fn logical_or<'s>(input: &mut &'s str) -> PResult<Expr> {
-    let (init, ops) = (
+fn logical_or<'s>(input: &mut &'s str) -> ModalResult<Expr> {
+    let (init, ops): (Expr, Vec<((), &str, (), Expr)>) = (
         logical_and,
         repeat(0.., (ws, "or", ws, logical_and)),
     )
@@ -252,7 +249,7 @@ fn logical_or<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse assignment
-fn assignment<'s>(input: &mut &'s str) -> PResult<Expr> {
+fn assignment<'s>(input: &mut &'s str) -> ModalResult<Expr> {
     alt((
         (identifier, ws, '=', ws, assignment).map(|(name, _, _, _, value)| {
             Expr::Assignment {
@@ -266,19 +263,19 @@ fn assignment<'s>(input: &mut &'s str) -> PResult<Expr> {
 }
 
 /// Parse a full expression
-fn expression<'s>(input: &mut &'s str) -> PResult<Expr> {
+fn expression<'s>(input: &mut &'s str) -> ModalResult<Expr> {
     assignment.parse_next(input)
 }
 
 /// Parse a print statement
-fn print_stmt<'s>(input: &mut &'s str) -> PResult<Stmt> {
+fn print_stmt<'s>(input: &mut &'s str) -> ModalResult<Stmt> {
     ("print", ws, expression, ws, ';')
         .map(|(_, _, expr, _, _)| Stmt::Print(expr))
         .parse_next(input)
 }
 
 /// Parse a variable declaration
-fn var_declaration<'s>(input: &mut &'s str) -> PResult<Stmt> {
+fn var_declaration<'s>(input: &mut &'s str) -> ModalResult<Stmt> {
     (
         "var",
         ws,
@@ -295,14 +292,14 @@ fn var_declaration<'s>(input: &mut &'s str) -> PResult<Stmt> {
 }
 
 /// Parse an expression statement
-fn expr_stmt<'s>(input: &mut &'s str) -> PResult<Stmt> {
+fn expr_stmt<'s>(input: &mut &'s str) -> ModalResult<Stmt> {
     terminated(expression, (ws, ';'))
         .map(Stmt::Expression)
         .parse_next(input)
 }
 
 /// Parse a statement
-fn statement<'s>(input: &mut &'s str) -> PResult<Stmt> {
+fn statement<'s>(input: &mut &'s str) -> ModalResult<Stmt> {
     preceded(
         ws,
         alt((print_stmt, var_declaration, expr_stmt)),
@@ -311,7 +308,7 @@ fn statement<'s>(input: &mut &'s str) -> PResult<Stmt> {
 }
 
 /// Parse a program (list of statements)
-fn program<'s>(input: &mut &'s str) -> PResult<Program> {
+fn program<'s>(input: &mut &'s str) -> ModalResult<Program> {
     terminated(repeat(0.., statement), ws)
         .map(Program::new)
         .parse_next(input)
