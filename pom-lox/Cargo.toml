@@ -7,6 +7,6 @@ edition = "2021"
 pom = "3.2"
 lox-ast = { workspace = true }
 
-[[bin]]
-name = "pom-lox"
-path = "src/main.rs"
+[lib]
+name = "pom_lox"
+path = "src/lib.rs"
