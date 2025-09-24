@@ -9,6 +9,7 @@ lox-ast = { workspace = true }
 nom-lox = { path = "../nom-lox" }
 # chumsky-lox = { path = "../chumsky-lox" }  # Disabled due to macOS linker issues
 pest-lox = { path = "../pest-lox" }
+winnow-lox = { path = "../winnow-lox" }
 lalrpop-lox = { path = "../lalrpop-lox" }
 pom-lox = { path = "../pom-lox" }
 lelwel-lox = { path = "../lelwel-lox" }

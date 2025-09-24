@@ -79,6 +79,32 @@ impl LoxParser for PestParser {
     }
 }
 
+/// Parser implementation for winnow-lox
+pub struct WinnowParser;
+
+impl LoxParser for WinnowParser {
+    fn name(&self) -> &'static str { winnow_lox::PARSER_NAME }
+    fn version(&self) -> &'static str { winnow_lox::PARSER_VERSION }
+    fn description(&self) -> &'static str { winnow_lox::PARSER_DESCRIPTION }
+
+    fn parse(&self, input: &str) -> ParseResult {
+        match winnow_lox::parse_program(input) {
+            Ok(program) => ParseResult {
+                success: true,
+                statement_count: program.statements.len(),
+                program: Some(program),
+                error: None,
+            },
+            Err(e) => ParseResult {
+                success: false,
+                program: None,
+                error: Some(format!("{:?}", e)),
+                statement_count: 0,
+            },
+        }
+    }
+}
+
 /// Parser implementation for lalrpop-lox
 pub struct LalrpopParser;
 
@@ -163,6 +189,7 @@ pub fn get_all_parsers() -> Vec<Box<dyn LoxParser>> {
         Box::new(NomParser),
         // Box::new(ChumskyParser),  // Disabled due to macOS linker issues
         Box::new(PestParser),
+        Box::new(WinnowParser),
         Box::new(LalrpopParser),
         Box::new(PomParser),
         Box::new(LelwelParser),
@@ -175,6 +202,7 @@ pub fn get_working_parsers() -> Vec<Box<dyn LoxParser>> {
         Box::new(NomParser),
         // Box::new(ChumskyParser),  // Disabled due to macOS linker issues
         Box::new(PestParser),
+        Box::new(WinnowParser),
         Box::new(LalrpopParser),
         Box::new(PomParser),
         Box::new(LelwelParser),

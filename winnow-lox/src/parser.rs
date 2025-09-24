@@ -1,7 +1,7 @@
 //! Winnow-based parser for the Lox language
 
 use winnow::{
-    ascii::{digit1, multispace0},
+    ascii::{digit1},
     combinator::{alt, delimited, opt, preceded, repeat, terminated},
     token::{take_while},
     ModalResult, Parser, stream::AsChar,
@@ -11,7 +11,7 @@ use lox_ast::{BinaryOp, Expr, Program, Stmt, UnaryOp, Value};
 /// Parse whitespace and comments
 fn ws(input: &mut &str) -> ModalResult<()> {
     repeat::<_, _, (), _, _>(0.., alt((
-        multispace0.void(),
+        take_while(1.., |c: char| c.is_whitespace()).void(),
         ("//", take_while(0.., |c| c != '\n')).void(),
     )))
     .void()

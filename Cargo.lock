@@ -403,6 +403,7 @@ dependencies = [
  "pom-lox",
  "serde",
  "serde_json",
+ "winnow-lox",
 ]
 
 [[package]]
