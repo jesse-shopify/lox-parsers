@@ -7,6 +7,10 @@ edition = "2021"
 nom = { workspace = true }
 lox-ast = { workspace = true }
 
+[lib]
+name = "nom_lox"
+path = "src/lib.rs"
+
 [[bin]]
 name = "nom-lox"
 path = "src/main.rs"

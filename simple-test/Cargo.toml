@@ -1,0 +1,14 @@
+[package]
+name = "simple-test"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+nom-lox = { path = "../nom-lox" }
+lox-ast = { path = "../lox-ast" }
+
+[[bin]]
+name = "simple-test"
+path = "src/main.rs"

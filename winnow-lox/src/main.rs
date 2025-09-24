@@ -1,12 +1,10 @@
 //! Winnow-based Lox parser implementation
 
-mod parser;
-
 use std::env;
 use std::fs;
 use std::io::{self, Write};
 
-use parser::parse_program;
+use winnow_lox::parse_program;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

@@ -4,8 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-chumsky = "0.9"
+chumsky = { workspace = true }
 lox-ast = { workspace = true }
+
+[lib]
+name = "chumsky_lox"
+path = "src/lib.rs"
 
 [[bin]]
 name = "chumsky-lox"

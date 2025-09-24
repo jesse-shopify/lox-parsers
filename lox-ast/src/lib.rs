@@ -4,9 +4,10 @@
 //! Based on the specification at https://craftinginterpreters.com/the-lox-language.html
 
 use std::fmt;
+use serde::{Deserialize, Serialize};
 
 /// Represents a Lox value
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Value {
     Nil,
     Bool(bool),
@@ -26,7 +27,7 @@ impl fmt::Display for Value {
 }
 
 /// Binary operators in Lox
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BinaryOp {
     // Arithmetic
     Add,
@@ -68,7 +69,7 @@ impl fmt::Display for BinaryOp {
 }
 
 /// Unary operators in Lox
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum UnaryOp {
     Minus,
     Not,
@@ -85,7 +86,7 @@ impl fmt::Display for UnaryOp {
 }
 
 /// Lox expressions
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Expr {
     /// Literal values
     Literal(Value),
@@ -144,7 +145,7 @@ pub enum Expr {
 }
 
 /// Lox statements
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Stmt {
     /// Expression statement
     Expression(Expr),
@@ -203,7 +204,7 @@ pub enum Stmt {
 }
 
 /// A complete Lox program
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Program {
     pub statements: Vec<Stmt>,
 }

@@ -3,13 +3,11 @@
 //! This crate implements a parser for the Lox programming language using the chumsky parser combinator library.
 //! Lox specification: https://craftinginterpreters.com/the-lox-language.html
 
-mod parser;
-
 use std::env;
 use std::fs;
 use std::io::{self, Write};
 
-use parser::parse_program;
+use chumsky_lox::parse_program;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
