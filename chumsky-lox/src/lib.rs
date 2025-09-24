@@ -20,8 +20,8 @@ pub use lox_ast::{Program, Stmt, Expr, Value, BinaryOp, UnaryOp};
 
 /// Parser information for identification
 pub const PARSER_NAME: &str = "chumsky";
-pub const PARSER_VERSION: &str = "0.9";
-pub const PARSER_DESCRIPTION: &str = "Parser combinator focused on excellent error messages";
+pub const PARSER_VERSION: &str = "1.0.0-alpha.8";
+pub const PARSER_DESCRIPTION: &str = "Parser combinator focused on excellent error messages - rewritten for 1.0.0-alpha";
 
 #[cfg(test)]
 mod tests {

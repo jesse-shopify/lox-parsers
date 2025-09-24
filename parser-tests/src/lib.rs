@@ -49,6 +49,9 @@ impl LoxParser for NomParser {
     }
 }
 
+// ChumskyParser implementation commented out due to macOS linker issues
+// The chumsky-lox parser works but causes linker assertion failures on macOS
+// when included in the test framework
 
 /// Parser implementation for lalrpop-lox
 pub struct LalrpopParser;
@@ -132,6 +135,7 @@ impl LoxParser for LelwelParser {
 pub fn get_all_parsers() -> Vec<Box<dyn LoxParser>> {
     vec![
         Box::new(NomParser),
+        // Box::new(ChumskyParser),  // Disabled due to macOS linker issues
         Box::new(LalrpopParser),
         Box::new(PomParser),
         Box::new(LelwelParser),
@@ -142,6 +146,7 @@ pub fn get_all_parsers() -> Vec<Box<dyn LoxParser>> {
 pub fn get_working_parsers() -> Vec<Box<dyn LoxParser>> {
     vec![
         Box::new(NomParser),
+        // Box::new(ChumskyParser),  // Disabled due to macOS linker issues
         Box::new(LalrpopParser),
         Box::new(PomParser),
         Box::new(LelwelParser),

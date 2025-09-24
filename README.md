@@ -203,8 +203,9 @@ The foundation is solid and ready for extension!
 # Notes
 
 - pom - 140 (u8, concise but syntax is cryptic due to operators)
-- chumsky - 250 (clunky/verbose return types)
+- chumsky - 250 (clunky/verbose return types, return impl)
 - winnow - 320
 - nom - 340
 - pest - 340
-- combine - 370
+- combine - 370 (return impl)
+- lalrpop - (grammar file)

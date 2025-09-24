@@ -7,6 +7,7 @@ description = "Comprehensive test suite for all Lox parser implementations"
 [dependencies]
 lox-ast = { workspace = true }
 nom-lox = { path = "../nom-lox" }
+# chumsky-lox = { path = "../chumsky-lox" }  # Disabled due to macOS linker issues
 lalrpop-lox = { path = "../lalrpop-lox" }
 pom-lox = { path = "../pom-lox" }
 lelwel-lox = { path = "../lelwel-lox" }
