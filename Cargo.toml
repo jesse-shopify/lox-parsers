@@ -7,7 +7,7 @@ members = [
     "lalrpop-lox",
     "pom-lox",
     "winnow-lox",
-    "parser-comparison",
+    "parser-tests",
 ]
 resolver = "2"
 

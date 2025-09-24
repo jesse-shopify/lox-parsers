@@ -1,0 +1,18 @@
+[package]
+name = "parser-tests"
+version = "0.1.0"
+edition = "2021"
+description = "Comprehensive test suite for all Lox parser implementations"
+
+[dependencies]
+lox-ast = { workspace = true }
+nom-lox = { path = "../nom-lox" }
+lalrpop-lox = { path = "../lalrpop-lox" }
+pom-lox = { path = "../pom-lox" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+colored = "2.0"
+
+[lib]
+name = "parser_tests"
+path = "src/lib.rs"

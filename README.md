@@ -16,21 +16,22 @@ A shared library crate containing the Abstract Syntax Tree definitions for the L
 ### nom-lox ✅
 A complete parser implementation using the [nom](https://github.com/Geal/nom) parser combinator library. Nom is known for its zero-copy parsing approach and excellent performance.
 
-**Status**: ✅ Complete and working
+**Status**: ✅ Complete and working (library-only)
 - Handles all basic Lox language constructs
 - Uses shared `lox-ast` crate
-- Passes all tests
-- Includes REPL and file parsing modes
+- All tests passing (3 test cases)
+- Library-only implementation for use as dependency
 - Correct operator precedence and associativity
 
 ### pest-lox ⚠️
 A parser implementation using the [pest](https://github.com/pest-parser/pest) PEG parser generator. Pest uses grammar files to generate parsers.
 
-**Status**: ⚠️ Builds but has runtime issues
+**Status**: ⚠️ Library-only with runtime issues
 - Grammar file defined in `lox.pest`
 - Uses shared `lox-ast` crate
-- Builds successfully but crashes on parsing
-- Needs debugging for proper operation
+- Compiles successfully with warnings
+- Runtime crashes during parsing (Option::unwrap() on None)
+- All 3 tests fail due to parser implementation bugs
 
 ### chumsky-lox ⚠️
 A parser implementation using the [chumsky](https://github.com/zesterer/chumsky) parser combinator library.
@@ -44,10 +45,12 @@ A parser implementation using the [chumsky](https://github.com/zesterer/chumsky)
 ### winnow-lox ❌
 A parser implementation using the [winnow](https://github.com/winnow-rs/winnow) parser combinator library (successor to nom).
 
-**Status**: ❌ API compatibility issues
-- Uses deprecated winnow APIs
-- Type annotation issues with new winnow version
-- Needs updates for current winnow API
+**Status**: ❌ Library-only with runtime issues
+- Uses winnow 0.6 API
+- Library compiles successfully with warnings
+- All 3 tests fail due to `repeat` parser assertion failures
+- Runtime panics with "repeat parsers must always consume" error
+- Needs significant debugging for winnow API compatibility
 
 ### lalrpop-lox ✅
 A parser implementation using the [LALRPOP](https://github.com/lalrpop/lalrpop) LR(1) parser generator.
@@ -59,16 +62,20 @@ A parser implementation using the [LALRPOP](https://github.com/lalrpop/lalrpop) 
 - All tests passing (11 test cases)
 - Comprehensive error handling with detailed messages
 
-### pom-lox 🚧
+### pom-lox ✅
 A parser implementation using the [pom](https://github.com/J-F-Liu/pom) parser combinator library.
 
-**Status**: 🚧 Placeholder
-- Directory structure created
-- Implementation pending
+**Status**: ✅ Complete and working (library-only)
+- Handles basic Lox language constructs
+- Uses shared `lox-ast` crate
+- All 5 tests passing
+- Library-only implementation for use as dependency
+- Supports arithmetic expressions, variables, print statements
+- Clean and simple pom combinator implementation
 
 ## Language Features Supported
 
-The nom-lox and lalrpop-lox implementations currently support:
+The nom-lox (library), lalrpop-lox (library), and pom-lox (library) implementations currently support:
 
 - **Literals**: Numbers, strings, booleans, and nil
 - **Expressions**: Arithmetic, comparison, equality, logical operations with correct precedence
@@ -85,28 +92,18 @@ The nom-lox and lalrpop-lox implementations currently support:
 cargo build
 ```
 
-### Run the nom-based parser
-```bash
-# Interactive REPL
-cargo run --bin nom-lox
+# nom-lox is now library-only (no binary)
+# Use as a dependency in other projects
 
-# Parse a file
-cargo run --bin nom-lox examples/hello.lox
-```
-
-### Run the pest-based parser
-```bash
-# Interactive REPL
-cargo run --bin pest-lox
-
-# Parse a file
-cargo run --bin pest-lox examples/hello.lox
-```
+# pest-lox is now library-only (no binary)
+# Use as a dependency in other projects
+# Note: currently has runtime issues
 
 ### Run other parsers
 ```bash
-# winnow-lox (currently not working - API issues)
-cargo run --bin winnow-lox
+# winnow-lox is now library-only (no binary)
+# Use as a dependency in other projects
+# Note: currently has runtime issues with repeat parsers
 
 # chumsky-lox (library-only, no binary due to linker issues)
 
