@@ -11,7 +11,3 @@ lox-ast = { workspace = true }
 [lib]
 name = "pest_lox"
 path = "src/lib.rs"
-
-[[bin]]
-name = "pest-lox"
-path = "src/main.rs"
