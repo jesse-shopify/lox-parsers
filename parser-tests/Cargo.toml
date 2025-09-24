@@ -12,7 +12,7 @@ pom-lox = { path = "../pom-lox" }
 lelwel-lox = { path = "../lelwel-lox" }
 serde = { workspace = true }
 serde_json = { workspace = true }
-colored = "2.0"
+colored = "3.0"
 
 [lib]
 name = "parser_tests"
