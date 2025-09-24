@@ -2,13 +2,13 @@
 //!
 //! This library provides a parser for the Lox programming language using the LALRPOP parser generator.
 //! LALRPOP generates LR(1) parsers from grammar specifications.
-//! 
+//!
 //! # Example
-//! 
+//!
 //! ```
 //! use lalrpop_lox::parse_program;
 //! use lox_ast::Program;
-//! 
+//!
 //! let input = r#"print "Hello, world!";"#;
 //! let result = parse_program(input);
 //! assert!(result.is_ok());
@@ -106,7 +106,7 @@ mod tests {
         for (input, expected_op, expected_operand) in test_cases {
             let result = parse_program(input).unwrap();
             assert_eq!(result.statements.len(), 1);
-            
+
             match &result.statements[0] {
                 Stmt::Expression(Expr::Unary { operator, operand }) => {
                     assert_eq!(*operator, expected_op);
@@ -133,7 +133,7 @@ mod tests {
             Stmt::Expression(Expr::Binary { left, operator, right }) => {
                 assert!(matches!(**left, Expr::Literal(Value::Number(1.0))));
                 assert_eq!(*operator, BinaryOp::Add);
-                
+
                 // Right side should be 2 * 3
                 match &**right {
                     Expr::Binary { left: inner_left, operator: inner_op, right: inner_right } => {
@@ -170,7 +170,7 @@ mod tests {
                     }
                     _ => panic!("Expected grouping on left side"),
                 }
-                
+
                 assert_eq!(*operator, BinaryOp::Multiply);
                 assert!(matches!(**right, Expr::Literal(Value::Number(3.0))));
             }
@@ -188,7 +188,7 @@ mod tests {
         for (input, expected_op) in test_cases {
             let result = parse_program(input).unwrap();
             assert_eq!(result.statements.len(), 1);
-            
+
             match &result.statements[0] {
                 Stmt::Expression(Expr::Binary { left, operator, right }) => {
                     assert!(matches!(**left, Expr::Literal(Value::Bool(true))));
@@ -214,7 +214,7 @@ mod tests {
         for (input, expected_op) in test_cases {
             let result = parse_program(input).unwrap();
             assert_eq!(result.statements.len(), 1);
-            
+
             match &result.statements[0] {
                 Stmt::Expression(Expr::Binary { operator, .. }) => {
                     assert_eq!(*operator, expected_op);

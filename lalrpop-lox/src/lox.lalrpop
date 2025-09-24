@@ -8,7 +8,7 @@ match {
     // Skip whitespace and comments
     r"\s*" => { },
     r"//[^\n\r]*[\n\r]*" => { },
-    
+
     // Keywords
     "print",
     "var",
@@ -17,7 +17,7 @@ match {
     "nil",
     "and",
     "or",
-    
+
     // Operators and punctuation
     "==",
     "!=",
@@ -34,7 +34,7 @@ match {
     "(",
     ")",
     ";",
-    
+
     // Literals
     r"[0-9]+(\.[0-9]+)?" => NUMBER,
     r#""[^"]*""# => STRING,
@@ -59,15 +59,15 @@ PrintStatement: Stmt = {
 
 VarDeclaration: Stmt = {
     "var" <name:Identifier> "=" <init:Expression> ";" => {
-        Stmt::VarDeclaration { 
-            name: name, 
-            initializer: Some(init) 
+        Stmt::VarDeclaration {
+            name: name,
+            initializer: Some(init)
         }
     },
     "var" <name:Identifier> ";" => {
-        Stmt::VarDeclaration { 
-            name: name, 
-            initializer: None 
+        Stmt::VarDeclaration {
+            name: name,
+            initializer: None
         }
     },
 }

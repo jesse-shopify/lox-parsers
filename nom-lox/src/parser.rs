@@ -7,11 +7,10 @@ use nom::{
         alpha1, alphanumeric1, char, multispace0, multispace1,
     },
     combinator::{map, opt, recognize, value},
-    error::ParseError,
-    multi::{fold_many0, many0},
+    multi::many0,
     number::complete::double,
     sequence::{delimited, pair, preceded, terminated, tuple},
-    IResult, Parser,
+    IResult
 };
 
 use lox_ast::{BinaryOp, Expr, Program, Stmt, UnaryOp, Value};

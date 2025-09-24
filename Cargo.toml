@@ -12,16 +12,6 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-nom = "7.1"
-chumsky = "0.9"
-pest = "2.7"
-pest_derive = "2.7"
-lalrpop = "0.20"
-lalrpop-util = "0.20"
-pom = "3.2"
-winnow = "0.6"
 lox-ast = { path = "lox-ast" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-colored = "2.0"
-clap = { version = "4.0", features = ["derive"] }

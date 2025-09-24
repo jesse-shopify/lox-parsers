@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-chumsky = { workspace = true }
+chumsky = "0.9"
 lox-ast = { workspace = true }
 
 [lib]
