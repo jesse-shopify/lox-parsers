@@ -203,3 +203,11 @@ The foundation is solid and ready for extension!
 # Notes
 
 - chumsky types are very verbose
+
+Lines
+
+- chumsky - 250
+- nom - 340
+- pest - 340
+- pom - 140
+- winnow - 320

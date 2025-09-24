@@ -104,7 +104,7 @@ fn literal<'a>() -> Parser<'a, u8, Expr> {
 
 /// Parse number literals (simplified - just integers)
 fn number<'a>() -> Parser<'a, u8, f64> {
-    is_a(|c: u8| c >= b'0' && c <= b'9').repeat(1..)
+    is_a(|c: u8| (b'0'..=b'9').contains(&c)).repeat(1..)
     .map(|digits| {
         let number_str = String::from_utf8(digits).unwrap_or_default();
         number_str.parse::<f64>().unwrap_or(0.0)

@@ -1,0 +1,12 @@
+[package]
+name = "combine-lox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+combine = "4.6"
+lox-ast = { workspace = true }
+
+[lib]
+name = "combine_lox"
+path = "src/lib.rs"
