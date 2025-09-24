@@ -7,9 +7,9 @@ edition = "2021"
 lalrpop = { workspace = true }
 
 [dependencies]
-lalrpop-util = { workspace = true }
+lalrpop-util = { workspace = true, features = ["lexer"] }
 lox-ast = { workspace = true }
 
-[[bin]]
-name = "lalrpop-lox"
-path = "src/main.rs"
+[lib]
+name = "lalrpop_lox"
+path = "src/lib.rs"

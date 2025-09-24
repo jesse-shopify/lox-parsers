@@ -1,0 +1,224 @@
+use std::str::FromStr;
+use lox_ast::{Program, Stmt, Expr, Value, BinaryOp, UnaryOp};
+
+grammar;
+
+// Lexer tokens
+match {
+    // Skip whitespace and comments
+    r"\s*" => { },
+    r"//[^\n\r]*[\n\r]*" => { },
+    
+    // Keywords
+    "print",
+    "var",
+    "true",
+    "false",
+    "nil",
+    "and",
+    "or",
+    
+    // Operators and punctuation
+    "==",
+    "!=",
+    "<=",
+    ">=",
+    "<",
+    ">",
+    "+",
+    "-",
+    "*",
+    "/",
+    "!",
+    "=",
+    "(",
+    ")",
+    ";",
+    
+    // Literals
+    r"[0-9]+(\.[0-9]+)?" => NUMBER,
+    r#""[^"]*""# => STRING,
+    r"[a-zA-Z_][a-zA-Z0-9_]*" => IDENTIFIER,
+}
+
+// Main program entry point
+pub Program: Program = {
+    <statements:Statement*> => Program::new(statements),
+}
+
+// Statements
+Statement: Stmt = {
+    PrintStatement,
+    VarDeclaration,
+    ExpressionStatement,
+}
+
+PrintStatement: Stmt = {
+    "print" <expr:Expression> ";" => Stmt::Print(expr),
+}
+
+VarDeclaration: Stmt = {
+    "var" <name:Identifier> "=" <init:Expression> ";" => {
+        Stmt::VarDeclaration { 
+            name: name, 
+            initializer: Some(init) 
+        }
+    },
+    "var" <name:Identifier> ";" => {
+        Stmt::VarDeclaration { 
+            name: name, 
+            initializer: None 
+        }
+    },
+}
+
+ExpressionStatement: Stmt = {
+    <expr:Expression> ";" => Stmt::Expression(expr),
+}
+
+// Expressions with precedence (lowest to highest)
+Expression: Expr = Assignment;
+
+Assignment: Expr = {
+    <name:Identifier> "=" <value:Assignment> => {
+        Expr::Assignment {
+            name: name,
+            value: Box::new(value),
+        }
+    },
+    LogicalOr,
+}
+
+LogicalOr: Expr = {
+    <left:LogicalOr> "or" <right:LogicalAnd> => {
+        Expr::Binary {
+            left: Box::new(left),
+            operator: BinaryOp::Or,
+            right: Box::new(right),
+        }
+    },
+    LogicalAnd,
+}
+
+LogicalAnd: Expr = {
+    <left:LogicalAnd> "and" <right:Equality> => {
+        Expr::Binary {
+            left: Box::new(left),
+            operator: BinaryOp::And,
+            right: Box::new(right),
+        }
+    },
+    Equality,
+}
+
+Equality: Expr = {
+    <left:Equality> <op:EqualityOp> <right:Comparison> => {
+        Expr::Binary {
+            left: Box::new(left),
+            operator: op,
+            right: Box::new(right),
+        }
+    },
+    Comparison,
+}
+
+EqualityOp: BinaryOp = {
+    "==" => BinaryOp::Equal,
+    "!=" => BinaryOp::NotEqual,
+}
+
+Comparison: Expr = {
+    <left:Comparison> <op:ComparisonOp> <right:Term> => {
+        Expr::Binary {
+            left: Box::new(left),
+            operator: op,
+            right: Box::new(right),
+        }
+    },
+    Term,
+}
+
+ComparisonOp: BinaryOp = {
+    ">" => BinaryOp::Greater,
+    ">=" => BinaryOp::GreaterEqual,
+    "<" => BinaryOp::Less,
+    "<=" => BinaryOp::LessEqual,
+}
+
+Term: Expr = {
+    <left:Term> <op:TermOp> <right:Factor> => {
+        Expr::Binary {
+            left: Box::new(left),
+            operator: op,
+            right: Box::new(right),
+        }
+    },
+    Factor,
+}
+
+TermOp: BinaryOp = {
+    "+" => BinaryOp::Add,
+    "-" => BinaryOp::Subtract,
+}
+
+Factor: Expr = {
+    <left:Factor> <op:FactorOp> <right:Unary> => {
+        Expr::Binary {
+            left: Box::new(left),
+            operator: op,
+            right: Box::new(right),
+        }
+    },
+    Unary,
+}
+
+FactorOp: BinaryOp = {
+    "*" => BinaryOp::Multiply,
+    "/" => BinaryOp::Divide,
+}
+
+Unary: Expr = {
+    <op:UnaryOp> <expr:Unary> => {
+        Expr::Unary {
+            operator: op,
+            operand: Box::new(expr),
+        }
+    },
+    Primary,
+}
+
+UnaryOp: UnaryOp = {
+    "!" => UnaryOp::Not,
+    "-" => UnaryOp::Minus,
+}
+
+Primary: Expr = {
+    <value:Literal> => Expr::Literal(value),
+    <name:Identifier> => Expr::Variable(name),
+    "(" <expr:Expression> ")" => Expr::Grouping(Box::new(expr)),
+}
+
+Literal: Value = {
+    <n:Number> => Value::Number(n),
+    <s:String> => Value::String(s),
+    "true" => Value::Bool(true),
+    "false" => Value::Bool(false),
+    "nil" => Value::Nil,
+}
+
+// Terminal tokens
+Number: f64 = {
+    <s:NUMBER> => f64::from_str(s).unwrap(),
+}
+
+String: String = {
+    <s:STRING> => {
+        // Remove quotes and handle escape sequences
+        let content = &s[1..s.len()-1];
+        content.to_string()
+    },
+}
+
+Identifier: String = {
+    <s:IDENTIFIER> => s.to_string(),
+}
