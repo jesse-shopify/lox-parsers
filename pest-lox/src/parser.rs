@@ -1,7 +1,7 @@
 //! Pest-based parser for the Lox language
 
 use pest::Parser;
-use pest::iterators::{Pair, Pairs};
+use pest::iterators::Pair;
 use lox_ast::{BinaryOp, Expr, Program, Stmt, UnaryOp, Value};
 
 #[derive(pest_derive::Parser)]

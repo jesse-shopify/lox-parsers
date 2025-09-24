@@ -1,98 +1,97 @@
 // Lox language grammar for Lelwel parser generator
 
-// Token definitions
-token NUMBER STRING IDENTIFIER;
-token And='and' Class='class' Else='else' False='false' For='for' Fun='fun' If='if';
-token Nil='nil' Or='or' Print='print' Return='return' Super='super' This='this' True='true';
-token Var='var' While='while';
-token Bang='!' BangEq='!=' Eq='=' EqEq='==' Greater='>' GreaterEq='>=';
-token Less='<' LessEq='<=' Minus='-' Plus='+' Slash='/' Star='*';
-token LeftParen='(' RightParen=')' LeftBrace='{' RightBrace='}';
-token Comma=',' Dot='.' Semicolon=';';
+// Token definitions (string literals only)
+token TRUE='true';
+token FALSE='false';
+token NIL='nil';
+token PRINT='print';
+token VAR='var';
+token AND='and';
+token OR='or';
+
+// Operators
+token PLUS='+';
+token MINUS='-';
+token STAR='*';
+token SLASH='/';
+token BANG='!';
+token BANG_EQUAL='!=';
+token EQUAL='=';
+token EQUAL_EQUAL='==';
+token GREATER='>';
+token GREATER_EQUAL='>=';
+token LESS='<';
+token LESS_EQUAL='<=';
+
+// Delimiters
+token LEFT_PAREN='(';
+token RIGHT_PAREN=')';
+token SEMICOLON=';';
+
+// Literals (these need to be handled specially)
+token NUMBER;
+token STRING;
+token IDENTIFIER;
 
 // Start rule
 start program;
 
-// Program is a sequence of statements
+// Grammar rules
 program: statement*;
 
-// Statement types
 statement:
-    expression_stmt
-    | print_stmt
+    print_stmt
     | var_declaration
+    | expression_stmt
 ;
 
-// Expression statement
-expression_stmt: expression Semicolon;
+print_stmt: PRINT expression SEMICOLON;
 
-// Print statement
-print_stmt: Print expression Semicolon;
+var_declaration: VAR IDENTIFIER [EQUAL expression] SEMICOLON;
 
-// Variable declaration
-var_declaration: Var IDENTIFIER [Eq expression] Semicolon;
+expression_stmt: expression SEMICOLON;
 
-// Expression with operator precedence (using Lelwel's direct left recursion)
-expression:
-    assignment
-;
+expression: assignment;
 
-// Assignment (right associative)
-right Eq;
 assignment:
-    assignment Eq assignment
-    | logical_or
+    logical_or [EQUAL assignment]
 ;
 
-// Logical OR
 logical_or:
-    logical_or Or logical_and
-    | logical_and
+    logical_and [OR logical_or]
 ;
 
-// Logical AND
 logical_and:
-    logical_and And equality
-    | equality
+    equality [AND logical_and]
 ;
 
-// Equality operators
 equality:
-    equality (BangEq | EqEq) comparison
-    | comparison
+    comparison [(BANG_EQUAL | EQUAL_EQUAL) equality]
 ;
 
-// Comparison operators
 comparison:
-    comparison (Greater | GreaterEq | Less | LessEq) term
-    | term
+    term [(GREATER | GREATER_EQUAL | LESS | LESS_EQUAL) comparison]
 ;
 
-// Addition and subtraction
 term:
-    term (Plus | Minus) factor
-    | factor
+    factor [(PLUS | MINUS) term]
 ;
 
-// Multiplication and division
 factor:
-    factor (Star | Slash) unary
-    | unary
+    unary [(STAR | SLASH) factor]
 ;
 
-// Unary operators
 unary:
-    (Bang | Minus) unary
+    (BANG | MINUS) unary
     | primary
 ;
 
-// Primary expressions
 primary:
-    True
-    | False
-    | Nil
+    TRUE
+    | FALSE
+    | NIL
     | NUMBER
     | STRING
     | IDENTIFIER
-    | LeftParen expression RightParen
+    | LEFT_PAREN expression RIGHT_PAREN
 ;

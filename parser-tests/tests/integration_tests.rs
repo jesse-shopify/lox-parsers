@@ -6,10 +6,10 @@
 //! - simple-test functionality
 
 use parser_tests::{
-    get_working_parsers, get_all_parsers, run_parser_tests, compare_all_parsers,
-    TestCase, TEST_CASES, LoxParser, NomParser, LalrpopParser, PomParser
+    get_working_parsers, run_parser_tests, compare_all_parsers,
+    NomParser, LalrpopParser, PomParser
 };
-use lox_ast::{Program, Stmt, Expr, Value, BinaryOp, UnaryOp};
+use lox_ast::{Stmt, Expr, Value, BinaryOp};
 
 /// Test that all working parsers can handle basic cases
 #[test]
@@ -277,11 +277,11 @@ fn test_full_parser_comparison() {
     let summaries = compare_all_parsers();
 
     // Should test all parsers
-    assert_eq!(summaries.len(), 3, "Should test all 3 working parsers");
+    assert_eq!(summaries.len(), 4, "Should test all 4 working parsers");
 
     // At least some parsers should work
     let working_count = summaries.iter().filter(|s| s.passed > 0).count();
-    assert!(working_count >= 3, "At least 3 parsers should pass some tests");
+    assert!(working_count >= 4, "At least 4 parsers should pass some tests");
 
     // Print summary
     println!("\n=== Test Summary ===");
