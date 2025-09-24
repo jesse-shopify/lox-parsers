@@ -29,10 +29,14 @@ primary = {
 
 unary = { unary_op* ~ primary }
 
-factor = { unary ~ (("*" | "/") ~ unary)* }
-term = { factor ~ (("+" | "-") ~ factor)* }
-comparison = { term ~ ((">" | ">=" | "<" | "<=") ~ term)* }
-equality = { comparison ~ (("==" | "!=") ~ comparison)* }
+factor = { unary ~ (factor_op ~ unary)* }
+factor_op = { "*" | "/" }
+term = { factor ~ (term_op ~ factor)* }
+term_op = { "+" | "-" }
+comparison = { term ~ (comparison_op ~ term)* }
+comparison_op = { ">=" | "<=" | ">" | "<" }
+equality = { comparison ~ (equality_op ~ comparison)* }
+equality_op = { "==" | "!=" }
 logical_and = { equality ~ ("and" ~ equality)* }
 logical_or = { logical_and ~ ("or" ~ logical_and)* }
 assignment = { identifier ~ "=" ~ assignment | logical_or }

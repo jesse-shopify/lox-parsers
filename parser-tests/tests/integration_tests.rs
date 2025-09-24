@@ -277,11 +277,11 @@ fn test_full_parser_comparison() {
     let summaries = compare_all_parsers();
 
     // Should test all parsers
-    assert_eq!(summaries.len(), 4, "Should test all 4 working parsers");
+    assert_eq!(summaries.len(), 5, "Should test all 5 working parsers");
 
     // At least some parsers should work
     let working_count = summaries.iter().filter(|s| s.passed > 0).count();
-    assert!(working_count >= 4, "At least 4 parsers should pass some tests");
+    assert!(working_count >= 5, "At least 5 parsers should pass some tests");
 
     // Print summary
     println!("\n=== Test Summary ===");

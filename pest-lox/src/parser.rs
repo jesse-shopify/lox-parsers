@@ -43,16 +43,19 @@ fn parse_statement(pair: Pair<Rule>) -> Result<Stmt, Box<pest::error::Error<Rule
 
 fn parse_print_statement(pair: Pair<Rule>) -> Result<Stmt, Box<pest::error::Error<Rule>>> {
     let mut inner = pair.into_inner();
-    inner.next(); // Skip "print" keyword
+
+    // The first (and should be only) inner pair is the expression
     let expr = parse_expression(inner.next().unwrap())?;
     Ok(Stmt::Print(expr))
 }
 
 fn parse_var_declaration(pair: Pair<Rule>) -> Result<Stmt, Box<pest::error::Error<Rule>>> {
     let mut inner = pair.into_inner();
-    inner.next(); // Skip "var" keyword
+
+    // First inner should be the identifier
     let name = inner.next().unwrap().as_str().to_string();
 
+    // Check if there's an initializer (the "=" and expression are grouped together)
     let initializer = if let Some(expr_pair) = inner.next() {
         Some(parse_expression(expr_pair)?)
     } else {
@@ -179,26 +182,31 @@ fn parse_comparison(pair: Pair<Rule>) -> Result<Expr, Box<pest::error::Error<Rul
 
 fn parse_term(pair: Pair<Rule>) -> Result<Expr, Box<pest::error::Error<Rule>>> {
     let mut inner = pair.into_inner();
-    let mut expr = parse_expression(inner.next().unwrap())?;
+    let mut expr = parse_factor(inner.next().unwrap())?;
 
+    // Now we expect alternating term_op and factor pairs
     while let Some(op_pair) = inner.next() {
-        let right_expr = inner.next().unwrap();
-        let op = match op_pair.as_str() {
-            "+" => BinaryOp::Add,
-            "-" => BinaryOp::Subtract,
-            _ => return Err(Box::new(pest::error::Error::new_from_pos(
-                pest::error::ErrorVariant::CustomError {
-                    message: "Unknown term operator".to_string(),
-                },
-                pest::Position::from_start(""),
-            ))),
-        };
+        if op_pair.as_rule() == Rule::term_op {
+            let op_str = op_pair.as_str();
+            let right_pair = inner.next().unwrap(); // Should be a factor
 
-        expr = Expr::Binary {
-            left: Box::new(expr),
-            operator: op,
-            right: Box::new(parse_expression(right_expr)?),
-        };
+            let op = match op_str {
+                "+" => BinaryOp::Add,
+                "-" => BinaryOp::Subtract,
+                _ => return Err(Box::new(pest::error::Error::new_from_pos(
+                    pest::error::ErrorVariant::CustomError {
+                        message: "Unknown term operator".to_string(),
+                    },
+                    pest::Position::from_start(""),
+                ))),
+            };
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator: op,
+                right: Box::new(parse_factor(right_pair)?),
+            };
+        }
     }
 
     Ok(expr)
@@ -206,26 +214,31 @@ fn parse_term(pair: Pair<Rule>) -> Result<Expr, Box<pest::error::Error<Rule>>> {
 
 fn parse_factor(pair: Pair<Rule>) -> Result<Expr, Box<pest::error::Error<Rule>>> {
     let mut inner = pair.into_inner();
-    let mut expr = parse_expression(inner.next().unwrap())?;
+    let mut expr = parse_unary(inner.next().unwrap())?;
 
+    // Now we expect alternating factor_op and unary pairs
     while let Some(op_pair) = inner.next() {
-        let right_expr = inner.next().unwrap();
-        let op = match op_pair.as_str() {
-            "*" => BinaryOp::Multiply,
-            "/" => BinaryOp::Divide,
-            _ => return Err(Box::new(pest::error::Error::new_from_pos(
-                pest::error::ErrorVariant::CustomError {
-                    message: "Unknown factor operator".to_string(),
-                },
-                pest::Position::from_start(""),
-            ))),
-        };
+        if op_pair.as_rule() == Rule::factor_op {
+            let op_str = op_pair.as_str();
+            let right_pair = inner.next().unwrap(); // Should be a unary
 
-        expr = Expr::Binary {
-            left: Box::new(expr),
-            operator: op,
-            right: Box::new(parse_expression(right_expr)?),
-        };
+            let op = match op_str {
+                "*" => BinaryOp::Multiply,
+                "/" => BinaryOp::Divide,
+                _ => return Err(Box::new(pest::error::Error::new_from_pos(
+                    pest::error::ErrorVariant::CustomError {
+                        message: "Unknown factor operator".to_string(),
+                    },
+                    pest::Position::from_start(""),
+                ))),
+            };
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator: op,
+                right: Box::new(parse_unary(right_pair)?),
+            };
+        }
     }
 
     Ok(expr)
@@ -235,7 +248,7 @@ fn parse_unary(pair: Pair<Rule>) -> Result<Expr, Box<pest::error::Error<Rule>>> 
     let mut inner = pair.into_inner().collect::<Vec<_>>();
     let primary = inner.pop().unwrap();
 
-    let mut expr = parse_expression(primary)?;
+    let mut expr = parse_primary(primary)?;
 
     // Apply unary operators in reverse order
     for op_pair in inner.into_iter().rev() {

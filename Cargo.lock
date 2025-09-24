@@ -399,6 +399,7 @@ dependencies = [
  "lelwel-lox",
  "lox-ast",
  "nom-lox",
+ "pest-lox",
  "pom-lox",
  "serde",
  "serde_json",
