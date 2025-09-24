@@ -10,7 +10,3 @@ lox-ast = { workspace = true }
 [lib]
 name = "chumsky_lox"
 path = "src/lib.rs"
-
-[[bin]]
-name = "chumsky-lox"
-path = "src/main.rs"

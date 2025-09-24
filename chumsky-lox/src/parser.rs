@@ -191,16 +191,14 @@ fn expression() -> impl Parser<char, Expr, Error = Simple<char>> + Clone {
             });
 
         // Assignment
-        let assignment = identifier()
+        identifier()
             .then_ignore(just('=').padded_by(whitespace()))
             .then(logical_or.clone())
             .map(|(name, value)| Expr::Assignment {
                 name,
                 value: Box::new(value),
             })
-            .or(logical_or);
-
-        assignment
+            .or(logical_or)
     })
 }
 
