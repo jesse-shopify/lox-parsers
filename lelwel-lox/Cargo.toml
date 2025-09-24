@@ -1,0 +1,14 @@
+[package]
+name = "lelwel-lox"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+lelwel = "0.8"
+
+[dependencies]
+lox-ast = { workspace = true }
+
+[lib]
+name = "lelwel_lox"
+path = "src/lib.rs"

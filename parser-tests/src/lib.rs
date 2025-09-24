@@ -102,12 +102,39 @@ impl LoxParser for PomParser {
     }
 }
 
+/// Parser implementation for lelwel-lox
+pub struct LelwelParser;
+
+impl LoxParser for LelwelParser {
+    fn name(&self) -> &'static str { lelwel_lox::PARSER_NAME }
+    fn version(&self) -> &'static str { lelwel_lox::PARSER_VERSION }
+    fn description(&self) -> &'static str { lelwel_lox::PARSER_DESCRIPTION }
+
+    fn parse(&self, input: &str) -> ParseResult {
+        match lelwel_lox::parse_program(input) {
+            Ok(program) => ParseResult {
+                success: true,
+                statement_count: program.statements.len(),
+                program: Some(program),
+                error: None,
+            },
+            Err(e) => ParseResult {
+                success: false,
+                program: None,
+                error: Some(format!("{:?}", e)),
+                statement_count: 0,
+            },
+        }
+    }
+}
+
 /// Get all available parsers (only working ones to avoid linker issues)
 pub fn get_all_parsers() -> Vec<Box<dyn LoxParser>> {
     vec![
         Box::new(NomParser),
         Box::new(LalrpopParser),
         Box::new(PomParser),
+        Box::new(LelwelParser),
     ]
 }
 
@@ -117,6 +144,7 @@ pub fn get_working_parsers() -> Vec<Box<dyn LoxParser>> {
         Box::new(NomParser),
         Box::new(LalrpopParser),
         Box::new(PomParser),
+        Box::new(LelwelParser),
     ]
 }
 

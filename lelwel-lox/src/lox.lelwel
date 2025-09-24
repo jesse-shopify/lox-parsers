@@ -1,0 +1,98 @@
+// Lox language grammar for Lelwel parser generator
+
+// Token definitions
+token NUMBER STRING IDENTIFIER;
+token And='and' Class='class' Else='else' False='false' For='for' Fun='fun' If='if';
+token Nil='nil' Or='or' Print='print' Return='return' Super='super' This='this' True='true';
+token Var='var' While='while';
+token Bang='!' BangEq='!=' Eq='=' EqEq='==' Greater='>' GreaterEq='>=';
+token Less='<' LessEq='<=' Minus='-' Plus='+' Slash='/' Star='*';
+token LeftParen='(' RightParen=')' LeftBrace='{' RightBrace='}';
+token Comma=',' Dot='.' Semicolon=';';
+
+// Start rule
+start program;
+
+// Program is a sequence of statements
+program: statement*;
+
+// Statement types
+statement:
+    expression_stmt
+    | print_stmt
+    | var_declaration
+;
+
+// Expression statement
+expression_stmt: expression Semicolon;
+
+// Print statement
+print_stmt: Print expression Semicolon;
+
+// Variable declaration
+var_declaration: Var IDENTIFIER [Eq expression] Semicolon;
+
+// Expression with operator precedence (using Lelwel's direct left recursion)
+expression:
+    assignment
+;
+
+// Assignment (right associative)
+right Eq;
+assignment:
+    assignment Eq assignment
+    | logical_or
+;
+
+// Logical OR
+logical_or:
+    logical_or Or logical_and
+    | logical_and
+;
+
+// Logical AND
+logical_and:
+    logical_and And equality
+    | equality
+;
+
+// Equality operators
+equality:
+    equality (BangEq | EqEq) comparison
+    | comparison
+;
+
+// Comparison operators
+comparison:
+    comparison (Greater | GreaterEq | Less | LessEq) term
+    | term
+;
+
+// Addition and subtraction
+term:
+    term (Plus | Minus) factor
+    | factor
+;
+
+// Multiplication and division
+factor:
+    factor (Star | Slash) unary
+    | unary
+;
+
+// Unary operators
+unary:
+    (Bang | Minus) unary
+    | primary
+;
+
+// Primary expressions
+primary:
+    True
+    | False
+    | Nil
+    | NUMBER
+    | STRING
+    | IDENTIFIER
+    | LeftParen expression RightParen
+;

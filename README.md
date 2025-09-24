@@ -202,12 +202,9 @@ The foundation is solid and ready for extension!
 
 # Notes
 
-- chumsky types are very verbose
-
-Lines
-
-- chumsky - 250
+- pom - 140 (u8, concise but syntax is cryptic due to operators)
+- chumsky - 250 (clunky/verbose return types)
+- winnow - 320
 - nom - 340
 - pest - 340
-- pom - 140
-- winnow - 320
+- combine - 370
