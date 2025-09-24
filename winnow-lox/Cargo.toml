@@ -10,7 +10,3 @@ lox-ast = { workspace = true }
 [lib]
 name = "winnow_lox"
 path = "src/lib.rs"
-
-[[bin]]
-name = "winnow-lox"
-path = "src/main.rs"
