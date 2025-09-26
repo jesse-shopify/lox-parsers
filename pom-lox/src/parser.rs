@@ -1,5 +1,5 @@
 use pom::parser::{Parser, is_a, none_of, sym, seq, end};
-use lox_ast::{Program, Stmt, Expr, Value, BinaryOp};
+use lox_ast::{Program, Stmt, Expr, Value, BinaryOp, UnaryOp};
 
 pub fn parse_program(input: &str) -> Result<Program, String> {
     match program().parse(input.as_bytes()) {
@@ -48,9 +48,73 @@ fn expression_statement<'a>() -> Parser<'a, u8, Stmt> {
     (expression() - ws() - sym(b';')).map(Stmt::Expression)
 }
 
-/// Parse expressions with basic arithmetic
+/// Parse expressions - add logical operators
 fn expression<'a>() -> Parser<'a, u8, Expr> {
-    term()
+    logical_or()
+}
+
+/// Parse logical OR: logical_and ("or" logical_and)*
+fn logical_or<'a>() -> Parser<'a, u8, Expr> {
+    (logical_and() + (ws() * seq(b"or") + ws() * logical_and()).repeat(0..))
+    .map(|(first, rest)| {
+        rest.into_iter().fold(first, |left, (_, right)| {
+            Expr::Binary {
+                left: Box::new(left),
+                operator: BinaryOp::Or,
+                right: Box::new(right),
+            }
+        })
+    })
+}
+
+/// Parse logical AND: equality ("and" equality)*
+fn logical_and<'a>() -> Parser<'a, u8, Expr> {
+    (equality() + (ws() * seq(b"and") + ws() * equality()).repeat(0..))
+    .map(|(first, rest)| {
+        rest.into_iter().fold(first, |left, (_, right)| {
+            Expr::Binary {
+                left: Box::new(left),
+                operator: BinaryOp::And,
+                right: Box::new(right),
+            }
+        })
+    })
+}
+
+/// Parse equality: comparison ("==" comparison | "!=" comparison)*
+fn equality<'a>() -> Parser<'a, u8, Expr> {
+    (comparison() + (ws() * (seq(b"==") | seq(b"!=")) + ws() * comparison()).repeat(0..))
+    .map(|(first, rest)| {
+        rest.into_iter().fold(first, |left, (op, right)| {
+            let binary_op = if op == b"==" { BinaryOp::Equal } else { BinaryOp::NotEqual };
+            Expr::Binary {
+                left: Box::new(left),
+                operator: binary_op,
+                right: Box::new(right),
+            }
+        })
+    })
+}
+
+/// Parse comparison: term (">=" term | ">" term | "<=" term | "<" term)*
+fn comparison<'a>() -> Parser<'a, u8, Expr> {
+    (term() + (ws() * (seq(b">=") | seq(b">") | seq(b"<=") | seq(b"<")) + ws() * term()).repeat(0..))
+    .map(|(first, rest)| {
+        rest.into_iter().fold(first, |left, (op, right)| {
+            let binary_op = match op {
+                b">=" => BinaryOp::GreaterEqual,
+                b">" => BinaryOp::Greater,
+                b"<=" => BinaryOp::LessEqual,
+                b"<" => BinaryOp::Less,
+                _ => unreachable!(),
+            };
+            Expr::Binary {
+                left: Box::new(left),
+                operator: binary_op,
+                right: Box::new(right),
+            }
+        })
+    })
 }
 
 /// Parse term: factor ("+" factor | "-" factor)*
@@ -68,9 +132,9 @@ fn term<'a>() -> Parser<'a, u8, Expr> {
     })
 }
 
-/// Parse factor: primary ("*" primary | "/" primary)*
+/// Parse factor: unary ("*" unary | "/" unary)*
 fn factor<'a>() -> Parser<'a, u8, Expr> {
-    (primary() + (ws() * (sym(b'*') | sym(b'/')) + ws() * primary()).repeat(0..))
+    (unary() + (ws() * (sym(b'*') | sym(b'/')) + ws() * unary()).repeat(0..))
     .map(|(first, rest)| {
         rest.into_iter().fold(first, |left, (op, right)| {
             let binary_op = if op == b'*' { BinaryOp::Multiply } else { BinaryOp::Divide };
@@ -83,10 +147,89 @@ fn factor<'a>() -> Parser<'a, u8, Expr> {
     })
 }
 
+/// Parse unary expressions: ("!" | "-")* primary
+fn unary<'a>() -> Parser<'a, u8, Expr> {
+    ((sym(b'!') | sym(b'-')).repeat(0..) + primary())
+    .map(|(ops, expr)| {
+        ops.into_iter().rev().fold(expr, |acc, op| {
+            let unary_op = if op == b'!' {
+                UnaryOp::Not
+            } else {
+                UnaryOp::Minus
+            };
+            Expr::Unary {
+                operator: unary_op,
+                operand: Box::new(acc),
+            }
+        })
+    })
+}
+
 /// Parse primary expressions
 fn primary<'a>() -> Parser<'a, u8, Expr> {
+    literal() | variable() | simple_grouped()
+}
+
+/// Parse simple grouped expressions: allow arithmetic but avoid recursion
+fn simple_grouped<'a>() -> Parser<'a, u8, Expr> {
+    // Create a special parser for inside parentheses that doesn't call primary (to avoid recursion)
+    let inside_parens = term_no_grouping();
+    (sym(b'(') * ws() * inside_parens - ws() - sym(b')')).map(|expr| Expr::Grouping(Box::new(expr)))
+}
+
+/// Parse term without grouping to avoid recursion
+fn term_no_grouping<'a>() -> Parser<'a, u8, Expr> {
+    (factor_no_grouping() + (ws() * (sym(b'+') | sym(b'-')) + ws() * factor_no_grouping()).repeat(0..))
+    .map(|(first, rest)| {
+        rest.into_iter().fold(first, |left, (op, right)| {
+            let binary_op = if op == b'+' { BinaryOp::Add } else { BinaryOp::Subtract };
+            Expr::Binary {
+                left: Box::new(left),
+                operator: binary_op,
+                right: Box::new(right),
+            }
+        })
+    })
+}
+
+/// Parse factor without grouping to avoid recursion
+fn factor_no_grouping<'a>() -> Parser<'a, u8, Expr> {
+    (unary_no_grouping() + (ws() * (sym(b'*') | sym(b'/')) + ws() * unary_no_grouping()).repeat(0..))
+    .map(|(first, rest)| {
+        rest.into_iter().fold(first, |left, (op, right)| {
+            let binary_op = if op == b'*' { BinaryOp::Multiply } else { BinaryOp::Divide };
+            Expr::Binary {
+                left: Box::new(left),
+                operator: binary_op,
+                right: Box::new(right),
+            }
+        })
+    })
+}
+
+/// Parse unary without grouping to avoid recursion
+fn unary_no_grouping<'a>() -> Parser<'a, u8, Expr> {
+    ((sym(b'!') | sym(b'-')).repeat(0..) + primary_no_grouping())
+    .map(|(ops, expr)| {
+        ops.into_iter().rev().fold(expr, |acc, op| {
+            let unary_op = if op == b'!' {
+                UnaryOp::Not
+            } else {
+                UnaryOp::Minus
+            };
+            Expr::Unary {
+                operator: unary_op,
+                operand: Box::new(acc),
+            }
+        })
+    })
+}
+
+/// Parse primary without grouping to avoid recursion
+fn primary_no_grouping<'a>() -> Parser<'a, u8, Expr> {
     literal() | variable()
 }
+
 
 /// Parse variable reference
 fn variable<'a>() -> Parser<'a, u8, Expr> {
